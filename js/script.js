@@ -2,28 +2,30 @@ var canvas = document.getElementById("renderCanvas");
 var engine = new BABYLON.Engine(canvas, true);
 var scene = new BABYLON.Scene(engine);
 
-    // display debug layer
-    //scene.debugLayer.show();
+// display debug layer
+//scene.debugLayer.show();
 
-// Creation de la camera
 var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2, 10, new BABYLON.Vector3(0, 100, 110), scene);
 camera.setTarget(BABYLON.Vector3.Zero());
 camera.attachControl(canvas, true);
 
-// Create a light
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
-// Create materials
-var orangeMaterial = new BABYLON.StandardMaterial("orangeMaterial", scene);
-orangeMaterial.diffuseColor = new BABYLON.Color3(1, 0.5, 0); // Orange color
-var whiteMaterial = new BABYLON.StandardMaterial("whiteMaterial", scene);
-whiteMaterial.diffuseColor = new BABYLON.Color3(1, 1, 1); // White color
-var blackMaterial = new BABYLON.StandardMaterial("blackMaterial", scene);
-blackMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0); // Black color
+// materiaux
+var redMaterial = new BABYLON.StandardMaterial("redMaterial", scene);
+var lightGreenMaterial = new BABYLON.StandardMaterial("lightGreenMaterial", scene);
 var greenMaterial = new BABYLON.StandardMaterial("greenMaterial", scene);
-greenMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // Green color
+var darkGreenMaterial = new BABYLON.StandardMaterial("darkGreenMaterial", scene);
+var purpleMaterial = new BABYLON.StandardMaterial("purpleMaterial", scene);
+redMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // rouge
+lightGreenMaterial.diffuseColor = new BABYLON.Color3(0.5, 1, 0); // vert clair
+greenMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // vert
+darkGreenMaterial.diffuseColor = new BABYLON.Color3(0, 0.5, 0); // vert foncé
+purpleMaterial.diffuseColor = new BABYLON.Color3(0.5, 0, 0.5); // violet
 
-// Create ground cells
+var houseSize = 15;
+
+// creation du quadrillage au sol
 for (var x = 0; x < 25; x++) {
     for (var z = 0; z < 25; z++) {
         var cell = BABYLON.MeshBuilder.CreateBox("cell_" + x + "_" + z, { size: 5 }, scene);
@@ -32,11 +34,11 @@ for (var x = 0; x < 25; x++) {
         cell.position.z = (z - 12) * 5;
 
         if ((x + z) % 2 !== 0) {
-            cell.material = blackMaterial;
+            cell.material = lightGreenMaterial;
 
 
         } else {
-            cell.material = whiteMaterial;
+            cell.material = darkGreenMaterial;
         }
         cell.actionManager = new BABYLON.ActionManager(scene);
         cell.actionManager.registerAction(new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function (evt) {
@@ -45,27 +47,35 @@ for (var x = 0; x < 25; x++) {
                     var coords = pickedMesh.name.split("_").slice(1);
                     var x = parseInt(coords[0]);
                     var z = parseInt(coords[1]);
-                    addCube(x, z);
+                    addHouse(x, z);
                 }
             }));
     }
 }
 
-// Function to add cube
-function addCube(x, z) {
-    var cube = BABYLON.MeshBuilder.CreateBox("cube_" + x + "_" + z, { size: 15, height: 7 }, scene);
-    cube.position.x = (x - 12) * 5;
-    cube.position.y = 1.5;
-    cube.position.z = (z - 12) * 5;
-    cube.material = orangeMaterial; // Red material for the cube
+/**ajout d'une maison */
+function addHouse(x, z) {
+    var house = BABYLON.MeshBuilder.CreateBox("cube_" + x + "_" + z, { size: houseSize, height: 7 }, scene);
+    house.position.x = (x - 12) * 5;
+    house.position.y = 1.5;
+    house.position.z = (z - 12) * 5;
+    house.material = purpleMaterial;
 }
+var buildingButton = document.getElementById("buildingButton");
+    buildingButton.addEventListener("click", function() {
+        houseSize = 15;
+            });
+var houseButton = document.getElementById("houseButton");
+    houseButton.addEventListener("click", function() {
+        houseSize = 5;
+            });
 
 
 engine.runRenderLoop(function () {
-    // Get the pick result
+    // position de la souris
     var pickResult = scene.pick(scene.pointerX, scene.pointerY);
 
-    // Create or update the highlight cube
+    // creation/maj de la zone de selection
     if (pickResult.hit && pickResult.pickedMesh.name.startsWith("cell")) {
         var coords = pickResult.pickedMesh.name.split("_").slice(1);
         var x = parseInt(coords[0]);
@@ -78,28 +88,28 @@ engine.runRenderLoop(function () {
     scene.render();
 });
 
-// Function to update the highlight cube
+/**mise a jour de la zone de selection */
 function updateHighlightCube(x, z) {
-    // Remove the previous highlight cube if exists
+    // suppression de la zone de selection precedente si elle existe
     removeHighlightCube();
 
-    // Create a new highlight cube
-    var highlightCube = BABYLON.MeshBuilder.CreateBox("highlightCube", { size: 15 ,height:0.5}, scene);
+    // creer une nouvelle zone de selection
+    var highlightCube = BABYLON.MeshBuilder.CreateBox("highlightCube", { size: houseSize ,height:0.5}, scene);
         
     highlightCube.position.x = (x - 12) * 5;
     highlightCube.position.y = 2.5;
     highlightCube.position.z = (z - 12) * 5;
-    highlightCube.material = greenMaterial;
+    highlightCube.material = redMaterial;
 
     var afterRenderFunction = function() {
         removeHighlightCube();
-        scene.unregisterAfterRender(afterRenderFunction); // Unregister the after render function after executing it once
+        scene.unregisterAfterRender(afterRenderFunction); // Désenregistre la fonction after render après l'avoir exécutée une fois
     };
 
     scene.registerAfterRender(afterRenderFunction);
 }
 
-// Function to remove the highlight cube
+/** Supprimer la zone de selection*/
 function removeHighlightCube() {
     var highlightCube = scene.getMeshByName("highlightCube");
     if (highlightCube) {
@@ -107,7 +117,7 @@ function removeHighlightCube() {
     }
 }
 
-// Handle window resize
+// redimensionnement de la fenêtre
 window.addEventListener("resize", function () {
     engine.resize();
 });
