@@ -5,7 +5,7 @@ var scene = new BABYLON.Scene(engine);
     // display debug layer
     //scene.debugLayer.show();
 
-// Create a camera
+// Creation de la camera
 var camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2, 10, new BABYLON.Vector3(0, 100, 110), scene);
 camera.setTarget(BABYLON.Vector3.Zero());
 camera.attachControl(canvas, true);
