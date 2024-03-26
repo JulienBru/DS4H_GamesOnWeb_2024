@@ -80,6 +80,38 @@ for (var x = 0; x < 25; x++) {
             }));
     }
 }
+/**Creer des particules de fumée */
+function createSmokeParticles(position) {
+    var particleSystem = new BABYLON.ParticleSystem("particles", 2000, scene);
+    particleSystem.particleTexture = new BABYLON.Texture("../assets/textures/smoke.jpg", scene);
+
+    particleSystem.emitter = position;
+    var emitBoxSize = houseSize/2;
+    particleSystem.minEmitBox = new BABYLON.Vector3(-emitBoxSize, 0, -emitBoxSize);
+    particleSystem.maxEmitBox = new BABYLON.Vector3(emitBoxSize, 0, emitBoxSize);
+
+    particleSystem.color1 = new BABYLON.Color4(1, 1, 1, 1); // Blanc
+    particleSystem.color2 = new BABYLON.Color4(1, 1, 1, 1); // Blanc
+    particleSystem.colorDead = new BABYLON.Color4(0, 0, 0, 0.1); // Transparence
+
+    particleSystem.minSize = 0.1;
+    particleSystem.maxSize = 0.5;
+
+    particleSystem.maxLifeTime = 0.3;
+
+    particleSystem.emitRate = 1000;
+
+    particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_STANDARD;
+
+    particleSystem.direction1 = new BABYLON.Vector3(-1, 8, -1);
+    particleSystem.direction2 = new BABYLON.Vector3(1, 8, 1);
+
+    particleSystem.minEmitPower = 0.5;
+    particleSystem.maxEmitPower = 1;
+    particleSystem.updateSpeed = 0.005;
+    return particleSystem;
+}
+
 
 /**ajout d'une maison */
 function addHouse(x, z) {
@@ -88,6 +120,14 @@ function addHouse(x, z) {
     house.position.y = 1.5;
     house.position.z = (z - 12) * 5;
     house.material = purpleMaterial;
+    
+    //particules lors de la creation d'une maison
+    var smoke = createSmokeParticles(new BABYLON.Vector3(house.position.x, house.position.y + 5, house.position.z));
+    smoke.start();
+    setTimeout(function() {
+        smoke.stop();
+    }, 50);
+
 }
 var buildingButton = document.getElementById("buildingButton");
     buildingButton.addEventListener("click", function() {
