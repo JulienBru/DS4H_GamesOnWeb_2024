@@ -65,15 +65,38 @@ var numCells = 25;
 /**positions occupees par des batiments */
 var occupiedPositions = [];
 
+var deleteMode = false;
+
+var gold = 50;
+
 // Boutons pour changer la taille des batiments
 var buildingButton = document.getElementById("buildingButton");
-    buildingButton.addEventListener("click", function() {
-        houseSize = 15;
-            });
+buildingButton.addEventListener("click", function() {
+    houseSize = 15;
+    deleteMode = false;
+        });
 var houseButton = document.getElementById("houseButton");
-    houseButton.addEventListener("click", function() {
-        houseSize = 5;
-            });
+houseButton.addEventListener("click", function() {
+    houseSize = 5;
+    deleteMode = false;
+        });
+
+var deleteButton = document.getElementById("deleteButton");
+deleteButton.addEventListener("click", function() {
+    deleteMode = true;
+    scene.onPointerDown = function (evt, pickResult) {
+        if(deleteMode && pickResult.hit && pickResult.pickedMesh.name.startsWith("cube")){
+            var selectedBuilding = pickResult.pickedMesh;
+            removeHouse(selectedBuilding);
+            alert("batiment supprimé.");
+        }
+    }});
+
+
+function updateGoldDisplay() {
+    document.getElementById("gold").innerText = "Or: " + gold;
+
+}
 
 /**Creer des particules de fumée 
  * @param {BABYLON.Vector3} position - Position de la fumée
@@ -159,49 +182,69 @@ function addHouse(x, z) {
     var buildingPosition = new BABYLON.Vector3((x - 12) * 5, 1.5, (z - 12) * 5);
     var buildingSize = new BABYLON.Vector3(houseSize, 7, houseSize);
 
-    // calcul des positions des coins du batiment
-    var buildingTopLeft = buildingPosition.clone();
-    var buildingBottomRight = buildingPosition.add(buildingSize);
-    
-    //verifier la collision avec les batiments existants
-    var isCollision = occupiedPositions.some(function(occupiedBuilding) {
-        var occupiedTopLeft = occupiedBuilding.position;
-        var occupiedBottomRight = occupiedBuilding.position.add(occupiedBuilding.size);
-
-
-        //verifier la collision dans l'espace 2D (en ignorant la hauteur)
-        return (
-            buildingTopLeft.x < occupiedBottomRight.x &&
-            buildingBottomRight.x > occupiedTopLeft.x &&
-            buildingTopLeft.z < occupiedBottomRight.z &&
-            buildingBottomRight.z > occupiedTopLeft.z
-        );
-    });
-
-    if(!isCollision){
-
-        var house = BABYLON.MeshBuilder.CreateBox("cube_" + x + "_" + z, { size: houseSize }, scene);
-        house.position.copyFrom(buildingPosition);
-        if (houseSize == 5) {//house
-        house.material = purpleMaterial;
-        } else {//building
-
-
-            house.material=purpleMaterial;
-            //house.material = buildingMaterial;
-            
-        }
-        //ajout de la maison a la liste des positions occupées
-        occupiedPositions.push({ position: buildingPosition, size: buildingSize });
-        //particules lors de la creation d'un batiment
-        var smoke = createSmokeParticles(new BABYLON.Vector3(house.position.x, house.position.y+houseSize / 2, house.position.z));
-        smoke.start();
-        setTimeout(function() {
-            smoke.stop();
-        }, 50);
-
+    if(houseSize == 5 &&gold >=5||houseSize == 15 && gold >=20){
+    // Vérifier si la position du bâtiment est valide
+    if (!isBuildingPositionValid(x, z)) {
+        console.log("Impossible de créer un bâtiment à cette position. La position est invalide.");
+        return;
     }
+    
+    var house = BABYLON.MeshBuilder.CreateBox("cube_" + x + "_" + z, { size: houseSize }, scene);
+    house.position.copyFrom(buildingPosition);
+    
+    if (houseSize == 5) {//house
+        gold -=5;
+        updateGoldDisplay();
+        house.material = purpleMaterial;
+    } else {//building
+        gold-=20;
+        updateGoldDisplay();
+        house.material = purpleMaterial;
+        //house.material = buildingMaterial;
+    }
+    var productionIntervalId = startGoldProduction(houseSize);
+    house.productionIntervalId = productionIntervalId;
 
+
+    //ajout de la maison a la liste des positions occupées
+    occupiedPositions.push({ position: buildingPosition, size: buildingSize });
+
+    //particules lors de la creation d'un batiment
+    var smoke = createSmokeParticles(new BABYLON.Vector3(house.position.x, house.position.y + houseSize / 2, house.position.z));
+    smoke.start();
+    setTimeout(function () {
+        smoke.stop();
+    }, 50);
+    }
+}
+
+function removeHouse(house){
+    stopGoldProduction(house.productionIntervalId);
+    var index = occupiedPositions.findIndex(function(occupiedBuilding){
+        return occupiedBuilding.position.equals(house.position);
+    });
+    if(index != -1){
+        occupiedPositions.splice(index, 1);
+    }
+    house.dispose();
+}
+
+//taux de production d'or par taille de batiment
+var goldProductionRates={
+    5:1,// batiment de taille 5
+    15:3 //batiment de taille 15
+}
+function startGoldProduction(houseSize){
+    var productionRate = goldProductionRates[houseSize];
+    if(productionRate != undefined){
+        return setInterval(function(){
+            gold += productionRate;
+            updateGoldDisplay();
+        }, 1000);
+    }
+}
+function stopGoldProduction(intervalId){
+    clearInterval(intervalId);
 }
 
 /**mise a jour de la zone de selection 
@@ -258,19 +301,19 @@ function isBuildingPositionValid(x, z) {
     var buildingTopLeft = buildingPosition.clone();
     var buildingBottomRight = buildingPosition.add(buildingSize);
 
-    // Vérifier si le cube est à l'intérieur des limites de la carte
-    //if (buildingTopLeft.x < 0 || buildingBottomRight.x > mapWidth || buildingTopLeft.z < 0 || buildingBottomRight.z > mapHeight) {
-    //    return false;
-    //}
-
     // Vérifier la collision avec les bâtiments existants
     var isCollision = occupiedPositions.some(function (occupiedBuilding) {
         var occupiedTopLeft = occupiedBuilding.position;
         var occupiedBottomRight = occupiedBuilding.position.add(occupiedBuilding.size);
-
+        /*
+        console.log(buildingTopLeft.x< occupiedBottomRight.x);
+        console.log(buildingBottomRight.x > occupiedTopLeft.x);
+        console.log(buildingTopLeft.z < occupiedBottomRight.z);
+        console.log(buildingBottomRight.z > occupiedTopLeft.z);
+        */
         // Vérifier la collision dans l'espace 2D (en ignorant la hauteur)
         return (
-            buildingTopLeft.x < occupiedBottomRight.x &&
+            buildingTopLeft.x< occupiedBottomRight.x &&
             buildingBottomRight.x > occupiedTopLeft.x &&
             buildingTopLeft.z < occupiedBottomRight.z &&
             buildingBottomRight.z > occupiedTopLeft.z
@@ -280,6 +323,7 @@ function isBuildingPositionValid(x, z) {
     return !isCollision;
 }
 
+updateGoldDisplay()
 // Création du plateau
 createBoard(numCells);
 // Ajout de l'action de cliquer sur chaque cellule du plateau
