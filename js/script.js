@@ -60,6 +60,8 @@ buildingMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/buildi
 
 /**taille du batiment */
 var houseSize = 15;
+/**type de batiment selectionne */
+var selectedBuildingType = "building";
 /**Nombres de cellules du plateau */
 var numCells = 25;
 /**positions occupees par des batiments */
@@ -72,26 +74,28 @@ var gold = 50;
 // Boutons pour changer la taille des batiments
 var buildingButton = document.getElementById("buildingButton");
 buildingButton.addEventListener("click", function() {
-    houseSize = 15;
+    houseSize = 15; // Taille pour les bâtiments
+    selectedBuildingType = "building"; // Définit le type comme bâtiment
     deleteMode = false;
-        });
+});
+
 var houseButton = document.getElementById("houseButton");
 houseButton.addEventListener("click", function() {
-    houseSize = 5;
+    houseSize = 5; // Taille pour les maisons
+    selectedBuildingType = "house"; // Définit le type comme maison
     deleteMode = false;
-        });
+});
 
 var deleteButton = document.getElementById("deleteButton");
 deleteButton.addEventListener("click", function() {
     deleteMode = true;
     scene.onPointerDown = function (evt, pickResult) {
-        if(deleteMode && pickResult.hit && pickResult.pickedMesh.name.startsWith("cube")){
+        if(deleteMode && pickResult.hit && pickResult.pickedMesh.name.startsWith("building_") || pickResult.pickedMesh.name.startsWith("house_")){
             var selectedBuilding = pickResult.pickedMesh;
             removeHouse(selectedBuilding);
             alert("batiment supprimé.");
         }
     }});
-
 
 function updateGoldDisplay() {
     document.getElementById("gold").innerText = "Or: " + gold;
@@ -167,7 +171,7 @@ function addClickActionToCells(numCells) {
                     var coords = pickedMesh.name.split("_").slice(1);
                     var x = parseInt(coords[0]);
                     var z = parseInt(coords[1]);
-                    addHouse(x, z);
+                    addHouse(x, z, selectedBuildingType);
                 }
             }));
         }
@@ -177,45 +181,53 @@ function addClickActionToCells(numCells) {
 /**ajout d'une maison 
  * @param {int} x - position x du batiment
  * @param {int} z - position z du batiment
+ * @param {string} type - type de batiment
 */
-function addHouse(x, z) {
-    var buildingPosition = new BABYLON.Vector3((x - 12) * 5, 1.5, (z - 12) * 5);
-    var buildingSize = new BABYLON.Vector3(houseSize, 7, houseSize);
+function addHouse(x, z, type) {
+    var newPosX = (x - 12) * 5;
+    var newPosZ = (z - 12) * 5;
 
-    if(houseSize == 5 &&gold >=5||houseSize == 15 && gold >=20){
-    // Vérifier si la position du bâtiment est valide
-    if (!isBuildingPositionValid(x, z)) {
-        console.log("Impossible de créer un bâtiment à cette position. La position est invalide.");
-        return;
+    var canPlaceBuilding = true; 
+
+    // Vérifiez toutes les constructions existantes pour les zones d'exclusion
+    for (var i = 0; i < scene.meshes.length; i++) {
+        var mesh = scene.meshes[i];
+        if (mesh.name.startsWith("building_") || mesh.name.startsWith("house_")) {
+            var existingPosX = mesh.position.x;
+            var existingPosZ = mesh.position.z;
+
+            var distanceX = Math.abs(newPosX - existingPosX);
+            var distanceZ = Math.abs(newPosZ - existingPosZ);
+
+            // Déterminez la distance d'exclusion en prenant la plus grande valeur pour les constructions concernées
+            var exclusionDistanceNew = type === "building" ? 20 : 10; // La distance d'exclusion pour la nouvelle construction
+            var exclusionDistanceExisting = mesh.name.startsWith("building_") ? 20 : 10; // La distance pour la construction existante
+            var requiredDistance = Math.max(exclusionDistanceNew, exclusionDistanceExisting); 
+
+            // Si la nouvelle construction est dans la zone d'exclusion d'une construction existante, on peut pas la placer 
+            if (distanceX < requiredDistance && distanceZ < requiredDistance) {
+                canPlaceBuilding = false;
+                break;
+            }
+        }
+    }
+    // Si aucune zone d'exclusion n'a été trouvée, placez la nouvelle construction
+    if (canPlaceBuilding == true && gold > 0) {
+        var buildingName = type === "building" ? "building_" : "house_";
+        var house = BABYLON.MeshBuilder.CreateBox(buildingName + x + "_" + z, { size: houseSize, height: 7 }, scene);
+        house.position.x = newPosX;
+        house.position.y = 1.5;
+        house.position.z = newPosZ;
+        house.material = type === "building" ? darkGreenMaterial : purpleMaterial;
+        //Si c'est un building alors on enlève 20 d'or, si c'est une house alors on enlève 10 d'or
+        gold -= type === "building" ? 20 : 10;
+        updateGoldDisplay();
+        var productionIntervalId = startGoldProduction(houseSize);
+        house.productionIntervalId = productionIntervalId;
+    } else {
+        console.log("Impossible de placer la construction ici en raison de la zone d'exclusion.");
     }
     
-    var house = BABYLON.MeshBuilder.CreateBox("cube_" + x + "_" + z, { size: houseSize }, scene);
-    house.position.copyFrom(buildingPosition);
-    
-    if (houseSize == 5) {//house
-        gold -=5;
-        updateGoldDisplay();
-        house.material = purpleMaterial;
-    } else {//building
-        gold-=20;
-        updateGoldDisplay();
-        house.material = purpleMaterial;
-        //house.material = buildingMaterial;
-    }
-    var productionIntervalId = startGoldProduction(houseSize);
-    house.productionIntervalId = productionIntervalId;
-
-
-    //ajout de la maison a la liste des positions occupées
-    occupiedPositions.push({ position: buildingPosition, size: buildingSize });
-
-    //particules lors de la creation d'un batiment
-    var smoke = createSmokeParticles(new BABYLON.Vector3(house.position.x, house.position.y + houseSize / 2, house.position.z));
-    smoke.start();
-    setTimeout(function () {
-        smoke.stop();
-    }, 50);
-    }
 }
 
 function removeHouse(house){
