@@ -16,9 +16,10 @@ camera.attachControl(canvas, true);
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
 // import de la carte
-const map = await BABYLON.SceneLoader.ImportMeshAsync("", "../assets/map/", "Map1.glb", scene);
-map.meshes[0].position = new BABYLON.Vector3(-80, 0, 0);
-map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
+BABYLON.SceneLoader.ImportMesh("", "../assets/map/Map1.glb", "", scene, function (map) {
+    map[0].position = new BABYLON.Vector3(-80, 0, 0);
+    map[0].scaling = new BABYLON.Vector3(5, 5, 5);
+});
 
 	// Ground
 	var groundTexture = new BABYLON.Texture("../assets/textures/water.png", scene);
@@ -44,7 +45,7 @@ map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
     waterMesh.position.y = -4.9;
 
 // Matériaux pour différents types de bâtiments
-// var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
+//var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
 //houseMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/house.jpg", scene);
 var buildingMaterial = new BABYLON.StandardMaterial("buildingMaterial", scene);
 buildingMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/building.jpg", scene);
