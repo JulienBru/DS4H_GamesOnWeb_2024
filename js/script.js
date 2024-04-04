@@ -16,9 +16,9 @@ camera.attachControl(canvas, true);
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
 // import de la carte
-const map = await BABYLON.SceneLoader.ImportMeshAsync("", "../assets/map/", "Map1.glb", scene);
-map.meshes[0].position = new BABYLON.Vector3(-80, 0, 0);
-map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
+//const map = await BABYLON.SceneLoader.ImportMeshAsync("", "../assets/map/", "Map1.glb", scene);
+//map.meshes[0].position = new BABYLON.Vector3(-80, 0, 0);
+//map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
 
 	// Ground
 	var groundTexture = new BABYLON.Texture("../assets/textures/water.png", scene);
