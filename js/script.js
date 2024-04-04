@@ -44,7 +44,7 @@ map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
     waterMesh.position.y = -4.9;
 
 // Matériaux pour différents types de bâtiments
-//var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
+// var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
 //houseMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/house.jpg", scene);
 var buildingMaterial = new BABYLON.StandardMaterial("buildingMaterial", scene);
 buildingMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/building.jpg", scene);
