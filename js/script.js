@@ -1,7 +1,11 @@
+import MaterialManager from "./materialManager.js";
+
 var canvas = document.getElementById("renderCanvas");
 var engine = new BABYLON.Engine(canvas, true);
 var scene = new BABYLON.Scene(engine);
 
+// Création du gestionnaire de matériaux
+var materialManager = new MaterialManager(scene);
 //display debug layer
 //scene.debugLayer.show();
 
@@ -38,19 +42,6 @@ map.meshes[0].scaling = new BABYLON.Vector3(5, 5, 5);
 	water.addToRenderList(ground);
 	waterMesh.material = water;
     waterMesh.position.y = -4.9;
-
-
-// materiaux
-var redMaterial = new BABYLON.StandardMaterial("redMaterial", scene);
-var lightGreenMaterial = new BABYLON.StandardMaterial("lightGreenMaterial", scene);
-var greenMaterial = new BABYLON.StandardMaterial("greenMaterial", scene);
-var darkGreenMaterial = new BABYLON.StandardMaterial("darkGreenMaterial", scene);
-var purpleMaterial = new BABYLON.StandardMaterial("purpleMaterial", scene);
-redMaterial.diffuseColor = new BABYLON.Color3(1, 0, 0); // rouge
-lightGreenMaterial.diffuseColor = new BABYLON.Color3(0.5, 1, 0); // vert clair
-greenMaterial.diffuseColor = new BABYLON.Color3(0, 1, 0); // vert
-darkGreenMaterial.diffuseColor = new BABYLON.Color3(0, 0.5, 0); // vert foncé
-purpleMaterial.diffuseColor = new BABYLON.Color3(0.5, 0, 0.5); // violet
 
 // Matériaux pour différents types de bâtiments
 //var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
@@ -147,9 +138,9 @@ function createBoard(boardSize) {
             cell.position.y = 0;
             cell.position.z = (z - 12) * 5;
             if ((x + z) % 2 !== 0) {
-                cell.material = lightGreenMaterial;
+                cell.material = materialManager.getMaterial("lightGreenMaterial");
             } else {
-                cell.material = darkGreenMaterial;
+                cell.material = materialManager.getMaterial("darkGreenMaterial");
             }
         }
     }
@@ -218,7 +209,8 @@ function addHouse(x, z, type) {
         house.position.x = newPosX;
         house.position.y = 1.5;
         house.position.z = newPosZ;
-        house.material = type === "building" ? darkGreenMaterial : purpleMaterial;
+        //On utilise darkGreenMaterial pour les buildings et purpleMaterial pour les houses
+        house.material = type === "building" ? materialManager.getMaterial("darkGreenMaterial") : materialManager.getMaterial("purpleMaterial");
         //Si c'est un building alors on enlève 20 d'or, si c'est une house alors on enlève 10 d'or
         gold -= type === "building" ? 20 : 10;
         updateGoldDisplay();
@@ -279,9 +271,9 @@ function updateHighlightCube(x, z) {
 
     // Définir la couleur en fonction de la possibilité d'ajouter un bâtiment
     if (isPossibleToAddBuilding) {
-        highlightCube.material = greenMaterial;
+        highlightCube.material = materialManager.getMaterial("greenMaterial");
     } else {
-        highlightCube.material = redMaterial;
+        highlightCube.material = materialManager.getMaterial("redMaterial");
     }
 
     var afterRenderFunction = function() {
