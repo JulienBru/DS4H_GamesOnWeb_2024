@@ -1,4 +1,5 @@
 import MaterialManager from "./materialManager.js";
+import Pnj from "./pnj.js";
 
 var canvas = document.getElementById("renderCanvas");
 var engine = new BABYLON.Engine(canvas, true);
@@ -44,6 +45,52 @@ BABYLON.SceneLoader.ImportMesh("", "/assets/map/Map1.glb", "", scene, function (
 	waterMesh.material = water;
     waterMesh.position.y = -4.9;
 
+/*
+    //pnj
+    BABYLON.SceneLoader.ImportMesh("", "/assets/pnj/pnj.glb", "", scene, function (meshes) {
+        var model = meshes[0];
+
+        // Initialiser la direction aléatoire
+        var currentDirection = randomDirection();
+        
+        // Initialiser le temps écoulé
+        var elapsedTime = 0;
+        model.position.y = 2.5;
+    
+        // Ajouter des mouvements aléatoires
+        scene.registerBeforeRender(function () {
+            // Appliquer le mouvement dans la direction actuelle
+            model.position.addInPlace(currentDirection.scale(0.05)); // Vitesse de déplacement arbitraire
+            
+            // Mettre à jour le temps écoulé
+            elapsedTime += scene.getEngine().getDeltaTime();
+    
+            // Vérifier si 2 secondes se sont écoulées
+            if (elapsedTime > 2000) {
+                // Changer de direction
+                currentDirection = randomDirection();
+                // Réinitialiser le temps écoulé
+                elapsedTime = 0;
+            }
+        });
+    });
+            // Définir une fonction pour générer une direction aléatoire
+            function randomDirection() {
+                var angle = Math.random() * Math.PI * 2; // Angle aléatoire
+                return new BABYLON.Vector3(Math.sin(angle), 0, Math.cos(angle)); // Vecteur de direction aléatoire sur le plan XZ
+            }*/
+var pnj;
+var pnjs = [];
+// Utilisation de la classe Pnj
+/*
+BABYLON.SceneLoader.ImportMesh("", "assets/pnj/pnj.glb", "", scene, function (meshes) {
+    var model = meshes[0];
+    pnj = new Pnj(scene, model);
+});*/
+    
+    
+
+
 // Matériaux pour différents types de bâtiments
 //var houseMaterial = new BABYLON.StandardMaterial("houseMaterial", scene);
 //houseMaterial.diffuseTexture = new BABYLON.Texture("../assets/textures/house.jpg", scene);
@@ -62,6 +109,12 @@ var occupiedPositions = [];
 var deleteMode = false;
 
 var gold = 50;
+
+//taux de production d'or par taille de batiment
+var goldProductionRates={
+    5:1,// batiment de taille 5 +1 or par seconde
+    15:3 //batiment de taille 15 +3 or par seconde
+};
 
 // Boutons pour changer la taille des batiments
 var buildingButton = document.getElementById("buildingButton");
@@ -201,6 +254,14 @@ function addHouse(x, z, type) {
         setTimeout(function () {
             smoke.stop();
         }, 50);
+
+        //creation d'un pnj
+        BABYLON.SceneLoader.ImportMesh("", "assets/pnj/pnj.glb", "", scene, function (meshes) {
+            var model = meshes[0];
+            pnj = new Pnj(scene, model);
+            // Ajoutez le nouveau PNJ au tableau
+            pnjs.push(pnj);
+        });
         
 
     }else{
@@ -220,11 +281,7 @@ function removeHouse(house){
     house.dispose();
 }
 
-//taux de production d'or par taille de batiment
-var goldProductionRates={
-    5:1,// batiment de taille 5 +1 or par seconde
-    15:3 //batiment de taille 15 +3 or par seconde
-}
+
 function startGoldProduction(houseSize){
     var productionRate = goldProductionRates[houseSize];
     if(productionRate != undefined){
@@ -334,6 +391,17 @@ engine.runRenderLoop(function () {
     } else {
         removeHighlightCube();
     }
+
+    //animation pnj
+    /*
+    if(pnj){
+        pnj.update();
+    }*/
+    // maj PNJ
+    for (var i = 0; i < pnjs.length; i++) {
+        pnjs[i].update();
+    }
+
     scene.render();
 });
 
