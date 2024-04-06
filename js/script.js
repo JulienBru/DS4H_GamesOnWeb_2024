@@ -58,7 +58,7 @@ var selectedBuildingType = "building";
 var numCells = 25;
 /**positions occupees par des batiments */
 var occupiedPositions = [];
-
+/**suppresion de structure */
 var deleteMode = false;
 
 var gold = 50;
@@ -85,9 +85,12 @@ deleteButton.addEventListener("click", function() {
         if(deleteMode && pickResult.hit && pickResult.pickedMesh.name.startsWith("building_") || pickResult.pickedMesh.name.startsWith("house_")){
             var selectedBuilding = pickResult.pickedMesh;
             removeHouse(selectedBuilding);
+
             alert("batiment supprimé.");
         }
     }});
+
+    
 
 function updateGoldDisplay() {
     document.getElementById("gold").innerText = "Or: " + gold;
@@ -179,34 +182,9 @@ function addHouse(x, z, type) {
     var newPosX = (x - 12) * 5;
     var newPosZ = (z - 12) * 5;
 
-    var canPlaceBuilding = true; 
-
-    // Vérifiez toutes les constructions existantes pour les zones d'exclusion
-    for (var i = 0; i < scene.meshes.length; i++) {
-        var mesh = scene.meshes[i];
-        if (mesh.name.startsWith("building_") || mesh.name.startsWith("house_")) {
-            var existingPosX = mesh.position.x;
-            var existingPosZ = mesh.position.z;
-
-            var distanceX = Math.abs(newPosX - existingPosX);
-            var distanceZ = Math.abs(newPosZ - existingPosZ);
-
-            // Déterminez la distance d'exclusion en prenant la plus grande valeur pour les constructions concernées
-            var exclusionDistanceNew = type === "building" ? 20 : 10; // La distance d'exclusion pour la nouvelle construction
-            var exclusionDistanceExisting = mesh.name.startsWith("building_") ? 20 : 10; // La distance pour la construction existante
-            var requiredDistance = Math.max(exclusionDistanceNew, exclusionDistanceExisting); 
-
-            // Si la nouvelle construction est dans la zone d'exclusion d'une construction existante, on peut pas la placer 
-            if (distanceX < requiredDistance && distanceZ < requiredDistance) {
-                canPlaceBuilding = false;
-                break;
-            }
-        }
-    }
-    // Si aucune zone d'exclusion n'a été trouvée, placez la nouvelle construction
-    if (canPlaceBuilding == true && gold > 0) {
+    if(isBuildingPositionValid(x, z) && gold > 0){
         var buildingName = type === "building" ? "building_" : "house_";
-        var house = BABYLON.MeshBuilder.CreateBox(buildingName + x + "_" + z, { size: houseSize, height: 7 }, scene);
+        var house = BABYLON.MeshBuilder.CreateBox(buildingName + x + "_" + z, { size: houseSize}, scene);
         house.position.x = newPosX;
         house.position.y = 1.5;
         house.position.z = newPosZ;
@@ -217,7 +195,15 @@ function addHouse(x, z, type) {
         updateGoldDisplay();
         var productionIntervalId = startGoldProduction(houseSize);
         house.productionIntervalId = productionIntervalId;
-    } else {
+        //particules lors de la creation d'un batiment
+        var smoke = createSmokeParticles(new BABYLON.Vector3(house.position.x, house.position.y + houseSize / 2, house.position.z));
+        smoke.start();
+        setTimeout(function () {
+            smoke.stop();
+        }, 50);
+        
+
+    }else{
         console.log("Impossible de placer la construction ici en raison de la zone d'exclusion.");
     }
     
@@ -236,8 +222,8 @@ function removeHouse(house){
 
 //taux de production d'or par taille de batiment
 var goldProductionRates={
-    5:1,// batiment de taille 5
-    15:3 //batiment de taille 15
+    5:1,// batiment de taille 5 +1 or par seconde
+    15:3 //batiment de taille 15 +3 or par seconde
 }
 function startGoldProduction(houseSize){
     var productionRate = goldProductionRates[houseSize];
@@ -298,34 +284,34 @@ function removeHighlightCube() {
  * @param {int} z - position z
 */
 function isBuildingPositionValid(x, z) {
-    
-    var buildingPosition = new BABYLON.Vector3((x - 12) * 5, 1.5, (z - 12) * 5);
-    var buildingSize = new BABYLON.Vector3(houseSize, 7, houseSize);
+    var newPosX = (x - 12) * 5;
+    var newPosZ = (z - 12) * 5;
 
-    // Calculer les positions des coins du bâtiment
-    var buildingTopLeft = buildingPosition.clone();
-    var buildingBottomRight = buildingPosition.add(buildingSize);
+    var canPlaceBuilding = true;
 
-    // Vérifier la collision avec les bâtiments existants
-    var isCollision = occupiedPositions.some(function (occupiedBuilding) {
-        var occupiedTopLeft = occupiedBuilding.position;
-        var occupiedBottomRight = occupiedBuilding.position.add(occupiedBuilding.size);
-        /*
-        console.log(buildingTopLeft.x< occupiedBottomRight.x);
-        console.log(buildingBottomRight.x > occupiedTopLeft.x);
-        console.log(buildingTopLeft.z < occupiedBottomRight.z);
-        console.log(buildingBottomRight.z > occupiedTopLeft.z);
-        */
-        // Vérifier la collision dans l'espace 2D (en ignorant la hauteur)
-        return (
-            buildingTopLeft.x< occupiedBottomRight.x &&
-            buildingBottomRight.x > occupiedTopLeft.x &&
-            buildingTopLeft.z < occupiedBottomRight.z &&
-            buildingBottomRight.z > occupiedTopLeft.z
-        );
-    });
+    // Vérifiez toutes les constructions existantes pour les zones d'exclusion
+    for (var i = 0; i < scene.meshes.length; i++) {
+        var mesh = scene.meshes[i];
+        if (mesh.name.startsWith("building_") || mesh.name.startsWith("house_")) {
+            var existingPosX = mesh.position.x;
+            var existingPosZ = mesh.position.z;
 
-    return !isCollision;
+            var distanceX = Math.abs(newPosX - existingPosX);
+            var distanceZ = Math.abs(newPosZ - existingPosZ);
+
+            // Déterminez la distance d'exclusion en prenant la plus grande valeur pour les constructions concernées
+            var exclusionDistanceNew = selectedBuildingType === "building" ? 20 : 10; // La distance d'exclusion pour la nouvelle construction
+            var exclusionDistanceExisting = mesh.name.startsWith("building_") ? 20 : 10; // La distance pour la construction existante
+            var requiredDistance = Math.max(exclusionDistanceNew, exclusionDistanceExisting); 
+
+            // Si la nouvelle construction est dans la zone d'exclusion d'une construction existante, on ne peut pas la placer
+            if (distanceX < requiredDistance && distanceZ < requiredDistance) {
+                canPlaceBuilding = false;
+                break;
+            }
+        }
+    }
+    return canPlaceBuilding;
 }
 
 updateGoldDisplay()
