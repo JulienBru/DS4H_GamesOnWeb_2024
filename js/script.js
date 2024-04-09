@@ -17,13 +17,13 @@ camera.attachControl(canvas, true);
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
 // import de la carte
-BABYLON.SceneLoader.ImportMesh("", "/assets/map/Map1.glb", "", scene, function (map) {
+BABYLON.SceneLoader.ImportMesh("", "../assets/map/Map1.glb", "", scene, function (map) {
     map[0].position = new BABYLON.Vector3(-80, 0, 0);
     map[0].scaling = new BABYLON.Vector3(5, 5, 5);
 });
 
 	// Ground
-	var groundTexture = new BABYLON.Texture("/assets/textures/water.png", scene);
+	var groundTexture = new BABYLON.Texture("../assets/textures/water.png", scene);
 	groundTexture.vScale = groundTexture.uScale = 4.0;
 	var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
 	groundMaterial.diffuseTexture = groundTexture;
@@ -35,7 +35,7 @@ BABYLON.SceneLoader.ImportMesh("", "/assets/map/Map1.glb", "", scene, function (
 	var waterMesh = BABYLON.Mesh.CreateGround("waterMesh", 1000, 1000, 32, scene, false);
 	var water = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(1024, 1024));
 	water.backFaceCulling = true;
-	water.bumpTexture = new BABYLON.Texture("/assets/textures/waterbump.jpg", scene);
+	water.bumpTexture = new BABYLON.Texture("../assets/textures/waterbump.jpg", scene);
 	water.windForce = -5;
 	water.waveHeight = 0.5;
 	water.bumpHeight = 0.1;
