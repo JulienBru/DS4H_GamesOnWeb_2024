@@ -17,11 +17,12 @@ camera.attachControl(canvas, true);
 var light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
 
 // import de la carte
+/*
 BABYLON.SceneLoader.ImportMesh("", "assets/map/Map1.glb", "", scene, function (map) {
     map[0].position = new BABYLON.Vector3(-80, 0, 0);
     map[0].scaling = new BABYLON.Vector3(5, 5, 5);
 });
-
+*/
 	// Ground
 	var groundTexture = new BABYLON.Texture("assets/textures/water.png", scene);
 	groundTexture.vScale = groundTexture.uScale = 4.0;
@@ -30,6 +31,10 @@ BABYLON.SceneLoader.ImportMesh("", "assets/map/Map1.glb", "", scene, function (m
 	var ground = BABYLON.Mesh.CreateGround("ground", 1000, 1000, 32, scene, false);
 	ground.material = groundMaterial;
     ground.position.y = -5;
+
+    const map = BABYLON.MeshBuilder.CreateGroundFromHeightMap("", "assets/map/map.png", {width:600, height :600, subdivisions: 300, maxHeight: 100});
+    map.position.y = -55;
+    map.material = materialManager.getMaterial("darkGreenMaterial");
 
 	// Water
 	var waterMesh = BABYLON.Mesh.CreateGround("waterMesh", 1000, 1000, 32, scene, false);
