@@ -108,6 +108,7 @@ var occupiedPositions = [];
 /**suppresion de structure */
 var deleteMode = false;
 
+var population = 0;
 var gold = 50;
 
 //taux de production d'or par taille de batiment
@@ -261,6 +262,8 @@ function addHouse(x, z, type) {
             pnj = new Pnj(scene, model);
             // Ajoutez le nouveau PNJ au tableau
             pnjs.push(pnj);
+            population += 1;
+            document.getElementById("population").innerText = "Population : " + population;
         });
         
 

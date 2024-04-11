@@ -1,4 +1,5 @@
 export default class pnj {
+
     constructor(scene, model) {
         this.scene = scene;
         this.model = model;
