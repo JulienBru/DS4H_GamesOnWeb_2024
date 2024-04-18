@@ -50,48 +50,10 @@ BABYLON.SceneLoader.ImportMesh("", "assets/map/Map1.glb", "", scene, function (m
 	waterMesh.material = water;
     waterMesh.position.y = -4.9;
 
-/*
-    //pnj
-    BABYLON.SceneLoader.ImportMesh("", "/assets/pnj/pnj.glb", "", scene, function (meshes) {
-        var model = meshes[0];
-
-        // Initialiser la direction aléatoire
-        var currentDirection = randomDirection();
-        
-        // Initialiser le temps écoulé
-        var elapsedTime = 0;
-        model.position.y = 2.5;
-    
-        // Ajouter des mouvements aléatoires
-        scene.registerBeforeRender(function () {
-            // Appliquer le mouvement dans la direction actuelle
-            model.position.addInPlace(currentDirection.scale(0.05)); // Vitesse de déplacement arbitraire
-            
-            // Mettre à jour le temps écoulé
-            elapsedTime += scene.getEngine().getDeltaTime();
-    
-            // Vérifier si 2 secondes se sont écoulées
-            if (elapsedTime > 2000) {
-                // Changer de direction
-                currentDirection = randomDirection();
-                // Réinitialiser le temps écoulé
-                elapsedTime = 0;
-            }
-        });
-    });
-            // Définir une fonction pour générer une direction aléatoire
-            function randomDirection() {
-                var angle = Math.random() * Math.PI * 2; // Angle aléatoire
-                return new BABYLON.Vector3(Math.sin(angle), 0, Math.cos(angle)); // Vecteur de direction aléatoire sur le plan XZ
-            }*/
+/**pnj */
 var pnj;
+/**Liste des pnj */
 var pnjs = [];
-// Utilisation de la classe Pnj
-/*
-BABYLON.SceneLoader.ImportMesh("", "assets/pnj/pnj.glb", "", scene, function (meshes) {
-    var model = meshes[0];
-    pnj = new Pnj(scene, model);
-});*/
     
     
 
@@ -118,8 +80,8 @@ var gold = 50;
 
 //taux de production d'or par taille de batiment
 var goldProductionRates={
-    5:1,// batiment de taille 5 +1 or par seconde
-    15:3 //batiment de taille 15 +3 or par seconde
+    5:1,// batiment de taille 5 : +1 or par seconde
+    15:3 //batiment de taille 15 : +3 or par seconde
 };
 
 // Boutons pour changer la taille des batiments
@@ -128,6 +90,7 @@ buildingButton.addEventListener("click", function() {
     houseSize = 15; // Taille pour les bâtiments
     selectedBuildingType = "building"; // Définit le type comme bâtiment
     deleteMode = false;
+    console.log("Building Mode");
 });
 
 var houseButton = document.getElementById("houseButton");
@@ -135,21 +98,21 @@ houseButton.addEventListener("click", function() {
     houseSize = 5; // Taille pour les maisons
     selectedBuildingType = "house"; // Définit le type comme maison
     deleteMode = false;
+    console.log("House Mode");
 });
 
 var deleteButton = document.getElementById("deleteButton");
 deleteButton.addEventListener("click", function() {
     deleteMode = true;
+    console.log("Delete Mode");
+    //event pour supprimer un batiment
     scene.onPointerDown = function (evt, pickResult) {
         if(deleteMode && pickResult.hit && pickResult.pickedMesh.name.startsWith("building_") || pickResult.pickedMesh.name.startsWith("house_")){
             var selectedBuilding = pickResult.pickedMesh;
-            removeHouse(selectedBuilding);
+            deleteHouse(selectedBuilding);
+        }}
+});
 
-            alert("batiment supprimé.");
-        }
-    }});
-
-    
 
 function updateGoldDisplay() {
     document.getElementById("gold").innerText = "Or: " + gold;
@@ -209,6 +172,7 @@ function createBoard(boardSize) {
     }
 }
 
+
 /**Ajout de l'action de cliquer sur chaque cellule du plateau
  * @param {int} numCells - Nombre de cellules du plateau
 */
@@ -225,12 +189,16 @@ function addClickActionToCells(numCells) {
                     var coords = pickedMesh.name.split("_").slice(1);
                     var x = parseInt(coords[0]);
                     var z = parseInt(coords[1]);
-                    addHouse(x, z, selectedBuildingType);
+                    if (!deleteMode) {
+                        addHouse(x, z, selectedBuildingType);
+                    }
                 }
             }));
         }
     }
 }
+
+
 
 /**ajout d'une maison 
  * @param {int} x - position x du batiment
@@ -264,7 +232,7 @@ function addHouse(x, z, type) {
         //creation d'un pnj
         BABYLON.SceneLoader.ImportMesh("", "assets/pnj/pnj.glb", "", scene, function (meshes) {
             var model = meshes[0];
-            pnj = new Pnj(scene, model);
+            pnj = new Pnj(scene, model,house.position);
             // Ajoutez le nouveau PNJ au tableau
             pnjs.push(pnj);
             population += 1;
@@ -278,7 +246,7 @@ function addHouse(x, z, type) {
     
 }
 
-function removeHouse(house){
+function deleteHouse(house){
     stopGoldProduction(house.productionIntervalId);
     var index = occupiedPositions.findIndex(function(occupiedBuilding){
         return occupiedBuilding.position.equals(house.position);
@@ -302,6 +270,20 @@ function startGoldProduction(houseSize){
 function stopGoldProduction(intervalId){
     clearInterval(intervalId);
 }
+
+
+//el fuego
+/*
+BABYLON.ParticleHelper.CreateAsync("fire", scene).then((set) => {
+    set.systems.forEach((s) => {
+        //modifier la position du feu
+        s.emitter = new BABYLON.Vector3(-50, 30, 0);
+    });
+
+    set.start();
+});*/
+
+
 
 /**mise a jour de la zone de selection 
  * @param {int} x - position x de la zone de selection
@@ -400,11 +382,7 @@ engine.runRenderLoop(function () {
         removeHighlightCube();
     }
 
-    //animation pnj
-    /*
-    if(pnj){
-        pnj.update();
-    }*/
+
     // maj PNJ
     for (var i = 0; i < pnjs.length; i++) {
         pnjs[i].update();

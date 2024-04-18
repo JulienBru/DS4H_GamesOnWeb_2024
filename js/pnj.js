@@ -1,6 +1,6 @@
 export default class pnj {
 
-    constructor(scene, model) {
+    constructor(scene, model,housePosition) {
         this.scene = scene;
         this.model = model;
         this.currentDirection = this.randomDirection();
@@ -9,6 +9,10 @@ export default class pnj {
         // pour avoir une position aléatoire lors de la création du pnj
         //this.model.position.x = Math.random() * 100 - 50;
         //this.model.position.z = Math.random() * 100 - 50;
+        
+        //le pnj apparait à la position de la maison
+        //this.model.position.x = housePosition.x;
+        //this.model.position.z = housePosition.z;
 
     }
     //Direction Aleatoire
