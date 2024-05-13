@@ -10,5 +10,7 @@ Bienvenue sur le dépôt du projet DS4H_GamesOnWeb_2024. Ce projet vise à explo
 - **Julien BRUNETTI**
 
 ### Documentation
-
 [Dossier Google Docs](https://docs.google.com/document/d/1p-KZWzWqPT31HdJh4cqCU7tgUtPh2aWgRMaqlv4_-EA/edit?usp=sharing)
+
+### Liens 
+https://julienbru.github.io/DS4H_GamesOnWeb_2024/
